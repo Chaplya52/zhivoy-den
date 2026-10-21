@@ -6,6 +6,10 @@ const PETS = [
   { id: 'robot', name: 'Робот', emoji: '🤖', description: 'Пиксельный друг' }
 ];
 
+// ===== ТВОЙ КЛЮЧ GIGACHAT =====
+// Вставь свой ключ между кавычками!
+const GIGACHAT_AUTH_KEY = 'MDFhMTVmMzItZjdmYS03NmIzLTk5MWYtNWRiZWFjMzRiZmFiOjAwZTIwYTgxLTNlN2UtNGM3OC1hZDUwLWMwNTA5YzFkMzJlNA==';
+
 // ===== Состояние игры =====
 let state = {
   petId: null,
@@ -14,7 +18,7 @@ let state = {
   xp: 0,
   level: 1,
   streak: 0,
-  lastCheckIn: null, // 'YYYY-MM-DD'
+  lastCheckIn: null,
   freezesLeft: 3,
   freezesMonth: null,
   tasks: [],
@@ -78,9 +82,7 @@ function showMainScreen() {
   document.getElementById('screen-main').classList.add('active');
   document.getElementById('pet-sprite').textContent = state.petEmoji;
   
-  // ВАЖНО: Проверяем пропущенные дни при запуске
   checkMissedDays(); 
-  
   updateUI();
   checkNewDay();
 }
@@ -134,19 +136,29 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-// ===== ИСПРАВЛЕННАЯ ФУНКЦИЯ (Опыт только 1 раз) =====
+// ===== ИСПРАВЛЕННАЯ ФУНКЦИЯ (Опыт только 1 раз + GigaChat) =====
 function toggleTask(id) {
   const task = state.tasks.find(t => t.id === id);
   if (!task) return;
   
-  // Если дело УЖЕ выполнено — просто игнорируем клик
+  // Если дело УЖЕ выполнено — игнорируем
   if (task.done) return; 
   
-  // Если дело еще не выполнено — выполняем его
+  // Выполняем
   task.done = true;
   addXP(10);
   updateStreak();
-  aiMessage(`Отлично! ${state.petName} радуется: «+10 XP за "${task.text}"!»`);
+  
+  // Питомец думает
+  aiMessage('...'); 
+  
+  // Формируем запрос для GigaChat
+  const prompt = `Ты — пиксельный дракончик по имени ${state.petName}. Твой характер: веселый, немного ленивый, но очень любящий своего хозяина. Хозяин только что выполнил задачу: "${task.text}". Напиши короткую (до 15 слов) реакцию, похвали его и добавь немного юмора.`;
+  
+  // Запрашиваем ИИ
+  askGigaChat(prompt).then(aiText => {
+    aiMessage(aiText);
+  });
   
   saveState();
   updateUI();
@@ -214,7 +226,7 @@ function updateStreak() {
   updateUI();
 }
 
-// ===== НОВАЯ ФУНКЦИЯ (Проверка пропуска при входе) =====
+// ===== Проверка пропуска при входе =====
 function checkMissedDays() {
   if (!state.lastCheckIn) return;
   
@@ -222,12 +234,9 @@ function checkMissedDays() {
   const days = daysBetween(state.lastCheckIn, today);
   
   if (days >= 2) {
-    // Если прошло 2 и более дней с последнего входа
     if (state.freezesLeft > 0 && days === 2) {
-      // Если пропущен ровно 1 день, тратим заморозку при следующем чек-ине
-      // (логика уже есть в updateStreak)
+      // Спасет заморозка при чек-ине
     } else if (days > 2 || state.freezesLeft <= 0) {
-      // Если пропущено больше или нет заморозок — сгораем
       if (state.streak > 0) {
         state.streak = 0;
         aiMessage(`😢 ${state.petName} загрустил... Ты пропустил слишком много дней, и серия сгорела. Но мы можем начать заново!`);
@@ -266,9 +275,65 @@ function updatePetMood() {
   }
 }
 
-// ===== ИИ-сообщения (заглушка) =====
+// ===== ИИ-сообщения =====
 function aiMessage(text) {
   document.getElementById('ai-message').textContent = text;
+}
+
+// ===== GigaChat Интеграция =====
+async function askGigaChat(promptText) {
+  if (GIGACHAT_AUTH_KEY === 'ТВОЙ_КЛЮЧ_ЗДЕСЬ') {
+    return `Отлично! ${state.petName} радуется: «+10 XP!» (Ключ не вставлен)`;
+  }
+
+  try {
+    // 1. Получаем токен
+    const authResponse = await fetch('https://ngw.devices.sberbank.ru:9443/api/v2/oauth', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json',
+        'RqUID': crypto.randomUUID(),
+        'Authorization': `Basic ${GIGACHAT_AUTH_KEY}`
+      },
+      body: 'scope=GIGACHAT_API_PERS'
+    });
+
+    if (!authResponse.ok) {
+      throw new Error(`Ошибка авторизации: ${authResponse.status}`);
+    }
+
+    const authData = await authResponse.json();
+    const accessToken = authData.access_token;
+
+    // 2. Запрос к модели
+    const chatResponse = await fetch('https://gigachat.devices.sberbank.ru/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
+      body: JSON.stringify({
+        model: 'GigaChat',
+        messages: [{ role: 'user', content: promptText }],
+        temperature: 0.8,
+        max_tokens: 60
+      })
+    });
+
+    if (!chatResponse.ok) {
+      const errText = await chatResponse.text();
+      throw new Error(`Ошибка API: ${chatResponse.status} - ${errText}`);
+    }
+
+    const chatData = await chatResponse.json();
+    return chatData.choices[0].message.content;
+
+  } catch (error) {
+    console.error('GigaChat Error:', error);
+    return `Отлично! ${state.petName} радуется: «+10 XP!» (Ошибка ИИ)`;
+  }
 }
 
 // ===== Инициализация =====
