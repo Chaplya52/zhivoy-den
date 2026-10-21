@@ -215,26 +215,28 @@ function aiMessage(text) { document.getElementById('ai-message').textContent = t
 // ===== GigaChat =====
 async function askGigaChat(promptText) {
   try {
-    const authResponse = await fetch('https://ngw.devices.sberbank.ru:9443/api/v2/oauth', {
+    // 1. Запрос на получение токена (через прокси, чтобы обойти CORS)
+    const authResponse = await fetch('https://corsproxy.io/?https://ngw.devices.sberbank.ru:9443/api/v2/oauth', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json',
         'RqUID': crypto.randomUUID(),
-        'Authorization': GIGACHAT_AUTH_KEY
+        'Authorization': GIGACHAT_AUTH_KEY // Без слова Basic!
       },
       body: 'scope=GIGACHAT_API_PERS'
     });
 
-    if (!authResponse.ok) throw new Error(`Ошибка авторизации: ${authResponse.status}`);
+    if (!authResponse.ok) throw new Error(`Авторизация: ${authResponse.status}`);
     const authData = await authResponse.json();
 
-    const chatResponse = await fetch('https://gigachat.devices.sberbank.ru/api/v1/chat/completions', {
+    // 2. Запрос к нейросети (тоже через прокси)
+    const chatResponse = await fetch('https://corsproxy.io/?https://gigachat.devices.sberbank.ru/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Authorization': `Bearer ${authData.access_token}`
+        'Authorization': `Bearer ${authData.access_token}` // Здесь Bearer оставляем
       },
       body: JSON.stringify({
         model: 'GigaChat',
@@ -244,13 +246,13 @@ async function askGigaChat(promptText) {
       })
     });
 
-    if (!chatResponse.ok) throw new Error(`Ошибка API: ${chatResponse.status}`);
+    if (!chatResponse.ok) throw new Error(`API: ${chatResponse.status}`);
     const chatData = await chatResponse.json();
     return chatData.choices[0].message.content;
 
   } catch (error) {
     console.error('GigaChat Error:', error);
-    return `Отлично! ${state.petName} радуется: «+10 XP!» (Ошибка: ${error.message})`;
+    return `Ошибка ИИ: ${error.message}`;
   }
 }
 
