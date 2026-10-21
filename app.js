@@ -215,40 +215,20 @@ function aiMessage(text) { document.getElementById('ai-message').textContent = t
 // ===== GigaChat =====
 async function askGigaChat(promptText) {
   try {
-    // 1. Запрос на получение токена (через прокси, чтобы обойти CORS)
-    const authResponse = await fetch('https://corsproxy.io/?https://ngw.devices.sberbank.ru:9443/api/v2/oauth', {
+    // Отправляем запрос на наш собственный сервер (Vercel)
+    const response = await fetch('/api/gigachat', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'application/json',
-        'RqUID': crypto.randomUUID(),
-        'Authorization': GIGACHAT_AUTH_KEY // Без слова Basic!
-      },
-      body: 'scope=GIGACHAT_API_PERS'
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: promptText })
     });
 
-    if (!authResponse.ok) throw new Error(`Авторизация: ${authResponse.status}`);
-    const authData = await authResponse.json();
+    if (!response.ok) {
+      const errData = await response.json();
+      throw new Error(errData.error || 'Server error');
+    }
 
-    // 2. Запрос к нейросети (тоже через прокси)
-    const chatResponse = await fetch('https://corsproxy.io/?https://gigachat.devices.sberbank.ru/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': `Bearer ${authData.access_token}` // Здесь Bearer оставляем
-      },
-      body: JSON.stringify({
-        model: 'GigaChat',
-        messages: [{ role: 'user', content: promptText }],
-        temperature: 0.8,
-        max_tokens: 60
-      })
-    });
-
-    if (!chatResponse.ok) throw new Error(`API: ${chatResponse.status}`);
-    const chatData = await chatResponse.json();
-    return chatData.choices[0].message.content;
+    const data = await response.json();
+    return data.text;
 
   } catch (error) {
     console.error('GigaChat Error:', error);
