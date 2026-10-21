@@ -139,15 +139,14 @@ function toggleTask(id) {
   const task = state.tasks.find(t => t.id === id);
   if (!task) return;
   
-  const wasDone = task.done; // Запоминаем состояние ДО клика
-  task.done = !task.done;    // Переключаем
+  // Если дело УЖЕ выполнено — просто игнорируем клик
+  if (task.done) return; 
   
-  // Даем опыт ТОЛЬКО если ставим галочку (а не снимаем)
-  if (!wasDone && task.done) {
-    addXP(10);
-    updateStreak();
-    aiMessage(`Отлично! ${state.petName} радуется: «+10 XP за "${task.text}"!»`);
-  }
+  // Если дело еще не выполнено — выполняем его
+  task.done = true;
+  addXP(10);
+  updateStreak();
+  aiMessage(`Отлично! ${state.petName} радуется: «+10 XP за "${task.text}"!»`);
   
   saveState();
   updateUI();
