@@ -221,7 +221,7 @@ async function askGigaChat(promptText) {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json',
         'RqUID': crypto.randomUUID(),
-        'Authorization': `Basic ${GIGACHAT_AUTH_KEY}`
+        'Authorization': GIGACHAT_AUTH_KEY
       },
       body: 'scope=GIGACHAT_API_PERS'
     });
