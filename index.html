@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Живой День</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a1a2e">
+</head>
+<body>
+  <div id="app">
+    <!-- Экран выбора питомца -->
+    <div id="screen-select" class="screen active">
+      <h1>Живой День</h1>
+      <p class="subtitle">Выбери своего спутника</p>
+      <div class="pet-grid" id="pet-grid"></div>
+    </div>
+
+    <!-- Основной экран -->
+    <div id="screen-main" class="screen">
+      <header>
+        <div class="streak-info">
+          <span id="streak-count">0</span> 🔥
+          <span class="freeze-info" id="freeze-info">❄️ 3</span>
+        </div>
+        <button id="btn-settings" class="icon-btn">⚙️</button>
+      </header>
+
+      <div class="pet-area">
+        <div class="pet-sprite" id="pet-sprite">🐣</div>
+        <div class="pet-mood" id="pet-mood">...</div>
+        <div class="xp-bar">
+          <div class="xp-fill" id="xp-fill" style="width: 0%"></div>
+        </div>
+        <div class="xp-text" id="xp-text">0 / 100 XP</div>
+      </div>
+
+      <div class="tasks-section">
+        <h2>Планы на сегодня</h2>
+        <ul id="task-list"></ul>
+        <div class="add-task-row">
+          <input type="text" id="new-task-input" placeholder="Добавить дело..." maxlength="50">
+          <button id="btn-add-task">+</button>
+        </div>
+      </div>
+
+      <div class="ai-message" id="ai-message">
+        Уголёк ждёт твоих планов...
+      </div>
+    </div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

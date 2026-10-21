@@ -1,0 +1,271 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Courier New', monospace;
+}
+
+body {
+  background: #1a1a2e;
+  color: #e0e0e0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  image-rendering: pixelated;
+}
+
+#app {
+  width: 100%;
+  max-width: 400px;
+  padding: 20px;
+  min-height: 100vh;
+}
+
+.screen {
+  display: none;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.screen.active {
+  display: flex;
+}
+
+h1 {
+  text-align: center;
+  color: #f0c040;
+  font-size: 28px;
+  text-shadow: 2px 2px 0 #8b4513;
+  letter-spacing: 2px;
+}
+
+.subtitle {
+  text-align: center;
+  color: #888;
+  font-size: 14px;
+}
+
+/* Выбор питомца */
+.pet-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.pet-card {
+  background: #16213e;
+  border: 3px solid #0f3460;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pet-card:hover, .pet-card:active {
+  border-color: #f0c040;
+  transform: scale(1.02);
+}
+
+.pet-card .emoji {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.pet-card .name {
+  color: #e0e0e0;
+  font-size: 14px;
+}
+
+/* Основной экран */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.streak-info {
+  font-size: 20px;
+  color: #f0c040;
+}
+
+.freeze-info {
+  font-size: 14px;
+  color: #6ec6ff;
+  margin-left: 10px;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.pet-area {
+  text-align: center;
+  padding: 20px;
+  background: #16213e;
+  border-radius: 12px;
+  border: 2px solid #0f3460;
+}
+
+.pet-sprite {
+  font-size: 80px;
+  display: block;
+  animation: float 2s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.pet-mood {
+  font-size: 14px;
+  color: #888;
+  margin: 10px 0;
+}
+
+.xp-bar {
+  width: 100%;
+  height: 16px;
+  background: #0f3460;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid #1a1a2e;
+}
+
+.xp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f0c040, #ff6b35);
+  transition: width 0.5s;
+}
+
+.xp-text {
+  font-size: 12px;
+  color: #888;
+  margin-top: 4px;
+}
+
+/* Задачи */
+.tasks-section {
+  background: #16213e;
+  border-radius: 12px;
+  padding: 15px;
+  border: 2px solid #0f3460;
+}
+
+.tasks-section h2 {
+  font-size: 16px;
+  color: #f0c040;
+  margin-bottom: 10px;
+}
+
+#task-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: #1a1a2e;
+  border-radius: 6px;
+  border: 2px solid #0f3460;
+  transition: all 0.2s;
+}
+
+.task-item.done {
+  opacity: 0.6;
+  border-color: #2ecc71;
+}
+
+.task-item.done .task-text {
+  text-decoration: line-through;
+}
+
+.task-checkbox {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #f0c040;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+.task-checkbox.checked {
+  background: #f0c040;
+  color: #1a1a2e;
+}
+
+.task-text {
+  flex: 1;
+  font-size: 14px;
+}
+
+.task-delete {
+  background: none;
+  border: none;
+  color: #e74c3c;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.add-task-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+#new-task-input {
+  flex: 1;
+  padding: 10px;
+  background: #1a1a2e;
+  border: 2px solid #0f3460;
+  border-radius: 6px;
+  color: #e0e0e0;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+#new-task-input:focus {
+  outline: none;
+  border-color: #f0c040;
+}
+
+#btn-add-task {
+  width: 44px;
+  background: #f0c040;
+  border: none;
+  border-radius: 6px;
+  font-size: 20px;
+  cursor: pointer;
+  color: #1a1a2e;
+  font-weight: bold;
+}
+
+.ai-message {
+  padding: 12px;
+  background: #0f3460;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #aaa;
+  text-align: center;
+  font-style: italic;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
