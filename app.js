@@ -133,13 +133,21 @@ function escapeHtml(text) {
 function toggleTask(id) {
   const task = state.tasks.find(t => t.id === id);
   if (!task) return;
+  
+  
+  const wasDone = task.done; 
+  
+  
   task.done = !task.done;
   
-  if (task.done) {
+  
+  if (!wasDone && task.done) {
     addXP(10);
     updateStreak();
     aiMessage(`Отлично! ${state.petName} радуется: «+10 XP за "${task.text}"!»`);
   }
+  
+  
   
   saveState();
   updateUI();
