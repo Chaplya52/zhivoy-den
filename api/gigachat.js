@@ -1,10 +1,10 @@
-// api/gigachat.js
 export default async function handler(req, res) {
-  // Разрешаем запросы с твоего сайта (CORS)
+  // Разрешаем запросы с твоего сайта
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
+  // Обработка предварительного запроса браузера (OPTIONS)
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   }
 
   const { prompt } = req.body;
-  const AUTH_KEY = 'MDFhMTVmMzItZjdmYS03NmIzLTk5MWYtNWRiZWFjMzRiZmFiOjAwZTIwYTgxLTNlN2UtNGM3OC1hZDUwLWMwNTA5YzFkMzJlNA=='; // Твой ключ
+  const AUTH_KEY = 'MDFhMTVmMzItZjdmYS03NmIzLTk5MWYtNWRiZWFjMzRiZmFiOjAwZTIwYTgxLTNlN2UtNGM3OC1hZDUwLWMwNTA5YzFkMzJlNA==';
 
   try {
     // 1. Получаем токен
@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     }
     const authData = await authResponse.json();
 
-    // 2. Запрос к нейросети
+    // 2. Запрос к нейросети (используем актуальный адрес)
     const chatResponse = await fetch('https://gigachat.devices.sberbank.ru/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -57,7 +57,6 @@ export default async function handler(req, res) {
     }
     const chatData = await chatResponse.json();
     
-    // Возвращаем ответ на сайт
     res.status(200).json({ text: chatData.choices[0].message.content });
 
   } catch (error) {
