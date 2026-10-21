@@ -15,10 +15,10 @@ let state = {
   level: 1,
   streak: 0,
   lastCheckIn: null, // 'YYYY-MM-DD'
-  freezesLeft: 3, // 3 попытки в месяц (как в Тиктоке)
-  freezesMonth: null, // 'YYYY-MM'
-  tasks: [], // { id, text, done }
-  lastTaskDate: null // для сброса дел на новый день
+  freezesLeft: 3,
+  freezesMonth: null,
+  tasks: [],
+  lastTaskDate: null
 };
 
 // ===== Загрузка/сохранение =====
@@ -77,6 +77,10 @@ function showMainScreen() {
   document.getElementById('screen-select').classList.remove('active');
   document.getElementById('screen-main').classList.add('active');
   document.getElementById('pet-sprite').textContent = state.petEmoji;
+  
+  // ВАЖНО: Проверяем пропущенные дни при запуске
+  checkMissedDays(); 
+  
   updateUI();
   checkNewDay();
 }
@@ -91,6 +95,7 @@ function updateUI() {
   document.getElementById('xp-text').textContent = `${state.xp % xpNeeded} / ${xpNeeded} XP (Ур. ${state.level})`;
   
   renderTasks();
+  updatePetMood();
 }
 
 // ===== Задачи =====
@@ -108,7 +113,6 @@ function renderTasks() {
     </li>
   `).join('');
 
-  // Обработчики
   list.querySelectorAll('.task-item').forEach(item => {
     item.querySelector('.task-checkbox').addEventListener('click', (e) => {
       e.stopPropagation();
@@ -130,28 +134,23 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+// ===== ИСПРАВЛЕННАЯ ФУНКЦИЯ (Опыт только 1 раз) =====
 function toggleTask(id) {
   const task = state.tasks.find(t => t.id === id);
   if (!task) return;
   
+  const wasDone = task.done; // Запоминаем состояние ДО клика
+  task.done = !task.done;    // Переключаем
   
-  const wasDone = task.done; 
-  
-  
-  task.done = !task.done;
-  
-  
+  // Даем опыт ТОЛЬКО если ставим галочку (а не снимаем)
   if (!wasDone && task.done) {
     addXP(10);
     updateStreak();
     aiMessage(`Отлично! ${state.petName} радуется: «+10 XP за "${task.text}"!»`);
   }
   
-  
-  
   saveState();
   updateUI();
-  updatePetMood();
 }
 
 function deleteTask(id) {
@@ -183,36 +182,31 @@ function addXP(amount) {
   updateUI();
 }
 
-// ===== Стрик (серийничек с заморозкой) =====
+// ===== Стрик =====
 function updateStreak() {
   const today = todayStr();
   
-  // Сброс заморозок в новый месяц
   if (state.freezesMonth !== monthStr()) {
     state.freezesMonth = monthStr();
     state.freezesLeft = 3;
     saveState();
   }
   
-  if (state.lastCheckIn === today) return; // уже отмечен сегодня
+  if (state.lastCheckIn === today) return; 
   
   if (state.lastCheckIn) {
     const days = daysBetween(state.lastCheckIn, today);
     
     if (days === 1) {
-      // Вчера был чек-ин, стрик продолжается
       state.streak++;
     } else if (days === 2 && state.freezesLeft > 0) {
-      // Пропустил 1 день, но есть заморозка
       state.freezesLeft--;
-      state.streak++; // стрик не сгорает
+      state.streak++; 
       aiMessage(`❄️ Ты пропустил день, но заморозка спасла серию! Осталось: ${state.freezesLeft}`);
     } else {
-      // Стрик сгорает
       state.streak = 1;
     }
   } else {
-    // Первый чек-ин
     state.streak = 1;
   }
   
@@ -221,27 +215,38 @@ function updateStreak() {
   updateUI();
 }
 
+// ===== НОВАЯ ФУНКЦИЯ (Проверка пропуска при входе) =====
+function checkMissedDays() {
+  if (!state.lastCheckIn) return;
+  
+  const today = todayStr();
+  const days = daysBetween(state.lastCheckIn, today);
+  
+  if (days >= 2) {
+    // Если прошло 2 и более дней с последнего входа
+    if (state.freezesLeft > 0 && days === 2) {
+      // Если пропущен ровно 1 день, тратим заморозку при следующем чек-ине
+      // (логика уже есть в updateStreak)
+    } else if (days > 2 || state.freezesLeft <= 0) {
+      // Если пропущено больше или нет заморозок — сгораем
+      if (state.streak > 0) {
+        state.streak = 0;
+        aiMessage(`😢 ${state.petName} загрустил... Ты пропустил слишком много дней, и серия сгорела. Но мы можем начать заново!`);
+        saveState();
+      }
+    }
+  }
+}
+
 // ===== Проверка нового дня =====
 function checkNewDay() {
   const today = todayStr();
   
   if (state.lastTaskDate !== today) {
-    // Новый день — сбрасываем дела
     state.tasks = [];
     state.lastTaskDate = today;
     saveState();
-    
-    // Проверяем, не сгорел ли стрик (если не было чек-ина вчера или сегодня)
-    if (state.lastCheckIn) {
-      const days = daysBetween(state.lastCheckIn, today);
-      if (days >= 2 && state.freezesLeft <= 0) {
-        state.streak = 0;
-        aiMessage(`${state.petName} загрустил... Серия сгорела. Но ты можешь начать заново!`);
-      }
-    }
-    
     updateUI();
-    updatePetMood();
   }
 }
 
@@ -255,7 +260,7 @@ function updatePetMood() {
     spriteEl.style.filter = 'none';
   } else if (state.streak === 0) {
     moodEl.textContent = 'Грустит...';
-    spriteEl.style.filter = 'grayscale(50%)';
+    spriteEl.style.filter = 'grayscale(80%)';
   } else {
     moodEl.textContent = 'Ждёт твоих дел...';
     spriteEl.style.filter = 'none';
@@ -263,7 +268,6 @@ function updatePetMood() {
 }
 
 // ===== ИИ-сообщения (заглушка) =====
-// Позже здесь будет вызов GigaChat API
 function aiMessage(text) {
   document.getElementById('ai-message').textContent = text;
 }
@@ -272,7 +276,6 @@ function aiMessage(text) {
 function init() {
   loadState();
   
-  // Регистрация service worker для PWA
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
@@ -283,7 +286,6 @@ function init() {
     renderPetSelection();
   }
   
-  // Обработчики
   document.getElementById('btn-add-task').addEventListener('click', () => {
     const input = document.getElementById('new-task-input');
     addTask(input.value);
