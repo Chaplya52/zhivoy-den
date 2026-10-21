@@ -6,8 +6,29 @@ const PETS = [
   { id: 'robot', name: 'Робот', emoji: '🤖', description: 'Пиксельный друг' }
 ];
 
-// ===== ТВОЙ КЛЮЧ GIGACHAT =====
-const GIGACHAT_AUTH_KEY = 'MDFhMTVmMzItZjdmYS03NmIzLTk5MWYtNWRiZWFjMzRiZmFiOjAwZTIwYTgxLTNlN2UtNGM3OC1hZDUwLWMwNTA5YzFkMzJlNA==';
+// ===== Фразы питомца (вместо ИИ) =====
+const PHRASES = [
+  "Ура! Ты справился, я так горжусь тобой!",
+  "Отлично! Чувствую, как я расту от твоих успехов.",
+  "Вот это да! Ты просто машина для выполнения дел.",
+  "Супер! Ещё один шаг к величию.",
+  "Ммм, вкусный опыт! Спасибо, хозяин.",
+  "Ты сделал это! Я даже подпрыгнул от радости.",
+  "Отлично! Продолжай в том же духе, и я стану драконом.",
+  "Вау! Ты сегодня в ударе.",
+  "Спасибо! Ты делаешь этот мир лучше (и меня сытее).",
+  "Класс! Я запомню этот день.",
+  "Ух ты! Ещё чуть-чуть, и я вырасту.",
+  "Ты лучший! Без тебя я бы зачах.",
+  "Так держать! Я верю в тебя.",
+  "Отлично сработано! Мой хвост виляет от счастья.",
+  "Ура! Дело сделано, можно и отдохнуть.",
+  "Ты супер! Каждое дело делает меня сильнее.",
+  "Ого! Ты сегодня продуктивный.",
+  "Спасибо за заботу! Я чувствую прилив сил.",
+  "Молодец! Я твой самый преданный фанат.",
+  "Есть! Ещё одна победа в копилку."
+];
 
 // ===== Состояние игры =====
 let state = {
@@ -111,7 +132,7 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-// ===== ВЫПОЛНЕНИЕ ЗАДАЧИ =====
+// ===== ВЫПОЛНЕНИЕ ЗАДАЧИ (Опыт только 1 раз) =====
 function toggleTask(id) {
   const task = state.tasks.find(t => t.id === id);
   if (!task || task.done) return; // Если уже сделано — ничего не делаем
@@ -120,13 +141,9 @@ function toggleTask(id) {
   addXP(10);
   updateStreak();
   
-  aiMessage('Думает...'); 
-  
-  const prompt = `Ты — пиксельный дракончик по имени ${state.petName}. Твой характер: веселый, немного ленивый, но очень любящий хозяина. Хозяин выполнил задачу: "${task.text}". Напиши короткую (до 15 слов) реакцию, похвали его и пошути.`;
-  
-  askGigaChat(prompt).then(aiText => {
-    aiMessage(aiText);
-  });
+  // Выбираем случайную фразу из массива
+  const randomPhrase = PHRASES[Math.floor(Math.random() * PHRASES.length)];
+  aiMessage(`«${randomPhrase}» (+10 XP)`);
   
   saveState();
   updateUI();
@@ -149,7 +166,7 @@ function addXP(amount) {
   const xpNeeded = state.level * 100;
   if (state.xp >= xpNeeded) {
     state.level++;
-    aiMessage(`🎉 ${state.petName} вырос до уровня ${state.level}!`);
+    aiMessage(`🎉 ${state.petName} вырос до уровня ${state.level}! Ты молодец!`);
   }
   saveState(); updateUI();
 }
@@ -212,30 +229,6 @@ function updatePetMood() {
 
 function aiMessage(text) { document.getElementById('ai-message').textContent = text; }
 
-// ===== GigaChat =====
-async function askGigaChat(promptText) {
-  try {
-    // Отправляем запрос на наш собственный сервер (Vercel)
-    const response = await fetch('/api/gigachat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: promptText })
-    });
-
-    if (!response.ok) {
-      const errData = await response.json();
-      throw new Error(errData.error || 'Server error');
-    }
-
-    const data = await response.json();
-    return data.text;
-
-  } catch (error) {
-    console.error('GigaChat Error:', error);
-    return `Ошибка ИИ: ${error.message}`;
-  }
-}
-
 // ===== Инициализация =====
 function init() {
   loadState();
@@ -264,6 +257,3 @@ function init() {
 }
 
 init();
-
-
-
